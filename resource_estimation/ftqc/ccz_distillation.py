@@ -61,3 +61,7 @@ def ccz_8_to_1() -> cirq.Circuit:
 
 x = ccz_8_to_1()
 print(x)
+for i, moment in enumerate(x):
+    print(f"Moment {i}:")
+    for op in moment:
+        print(" ", op)
