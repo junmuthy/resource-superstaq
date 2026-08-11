@@ -18,6 +18,7 @@ import cirq
 import cirq_superstaq as css
 import numpy as np
 import pytest
+from qldpc import codes
 
 import resource_estimation.ftqc.architecture as arch
 import resource_estimation.ftqc.lattice_surgery_primitives as lsp
@@ -37,6 +38,57 @@ def movement_architecture() -> arch.DefaultMovement:
 def test_architecture_exceptions(lattice_architecture, movement_architecture) -> None:
     with pytest.raises(ValueError, match="Cultivation cost"):
         _ = lattice_architecture.cultivate_cost(lsp.Cultivate(1).on(cirq.GridQubit(0, 0)))
+
+
+def test_movement_logical_ppm_cost(
+    movement_architecture: arch.DefaultMovement,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    q0, q1 = cirq.LineQubit.range(2)
+    operation = lsp.LogicalPPM("ZZ").on(q0, q1)
+    left_code = codes.SteaneCode()
+    right_code = codes.SteaneCode()
+    resource_cost = {
+        "gate_cost": collections.Counter({cirq.CZ: 17, cirq.MeasurementGate: 5}),
+        "moment_cost": collections.Counter(
+            {
+                cirq.PhasedXZGate: 2,
+                cirq.CZ: 3,
+                cirq.MeasurementGate: 1,
+                cirq.ResetChannel: 4,
+            },
+        ),
+        "num_physical_qubits": 101,
+    }
+    received: dict[str, object] = {}
+
+    def fake_resource_cost(*args: object, **kwargs: object) -> dict[str, object]:
+        received["args"] = args
+        received["kwargs"] = kwargs
+        return resource_cost
+
+    monkeypatch.setattr(arch, "logical_ppm_resource_cost", fake_resource_cost)
+    cost = movement_architecture.logical_ppm_cost(
+        operation,
+        left_code,
+        right_code,
+        rounds=7,
+        left_logical_index=2,
+        right_logical_index=4,
+    )
+
+    assert received == {
+        "args": (operation, left_code, right_code),
+        "kwargs": {
+            "rounds": 7,
+            "left_logical_index": 2,
+            "right_logical_index": 4,
+        },
+    }
+    assert cost == {
+        **resource_cost,
+        "op_time": pytest.approx(2610.81),
+    }
 
 
 def test_inplace_exact(lattice_architecture: arch.DefaultLattice) -> None:
