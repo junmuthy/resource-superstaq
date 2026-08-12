@@ -47,7 +47,22 @@ _LOGICAL_PAULI_PRODUCTS = ("XX", "ZZ")
 
 @cirq.value_equality
 class LogicalPPM(cirq.Gate):
-    """Opaque logical XX- or ZZ-product measurement primitive."""
+    """Represent a logical ``XX`` or ``ZZ`` product measurement.
+
+    The gate records only the logical observable being measured.  The physical
+    codes, logical indices within those codes, and number of syndrome rounds are
+    supplied separately when the operation is costed.  In particular, this is an
+    opaque resource-estimation primitive: it has no Cirq decomposition or
+    measurement key and is not intended for simulation.
+
+    Calling ``LogicalPPM("XX").on(q0, q1)`` produces a two-qubit Cirq operation
+    that retains this gate instance.  Costing code can therefore recover the
+    product label from ``operation.gate.pauli_product``.
+
+    Args:
+        pauli_product: The logical observable to measure, either ``"XX"`` or
+            ``"ZZ"``.
+    """
 
     def __init__(self, pauli_product: typing.Literal["XX", "ZZ"]) -> None:
         if pauli_product not in _LOGICAL_PAULI_PRODUCTS:
@@ -58,6 +73,7 @@ class LogicalPPM(cirq.Gate):
 
     @property
     def pauli_product(self) -> typing.Literal["XX", "ZZ"]:
+        """The two-logical-qubit Pauli product represented by this gate."""
         return self._pauli_product
 
     def _num_qubits_(self) -> int:

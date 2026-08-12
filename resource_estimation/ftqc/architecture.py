@@ -641,7 +641,25 @@ class DefaultMovement(Architecture):
         left_logical_index: int = 0,
         right_logical_index: int = 0,
     ) -> dict[str, object]:
-        """Cost a LogicalPPM from explicitly supplied qLDPC code data."""
+        """Cost a logical PPM and convert its parallel depth into wall time.
+
+        This is an explicit helper rather than an ``op_cost`` dispatch entry
+        because a Cirq ``LogicalPPM`` operation does not itself contain the two
+        physical code definitions or logical indices needed by qLDPC.
+
+        Args:
+            op: A two-qubit operation created from ``LogicalPPM``.
+            left_code: qLDPC CSS code for the first logical operand.
+            right_code: qLDPC CSS code for the second logical operand.
+            rounds: Number of joint-measurement syndrome rounds.
+            left_logical_index: Logical-qubit index within ``left_code``.
+            right_logical_index: Logical-qubit index within ``right_code``.
+
+        Returns:
+            The raw gate and moment counts, architecture-timed ``op_time``, and
+            physical-qubit footprint.  Movement and post-detachment correction
+            costs are intentionally not included.
+        """
         cost = logical_ppm_resource_cost(
             op,
             left_code,
