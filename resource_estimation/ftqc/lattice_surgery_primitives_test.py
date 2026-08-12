@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import typing
 from math import pi
 
 import cirq
@@ -21,7 +22,7 @@ import resource_estimation.ftqc.lattice_surgery_primitives as lsp
 
 
 @pytest.mark.parametrize("pauli_product", ("XX", "ZZ"))
-def test_logical_ppm(pauli_product: lsp.LogicalPauliProduct) -> None:
+def test_logical_ppm(pauli_product: typing.Literal["XX", "ZZ"]) -> None:
     gate = lsp.LogicalPPM(pauli_product)
     q0, q1 = cirq.LineQubit.range(2)
     operation = gate.on(q0, q1)
